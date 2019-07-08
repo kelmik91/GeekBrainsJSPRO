@@ -6,17 +6,17 @@ const products = [
     {id: 5, title: 'Chair', price: 187},
 ];
 
-const renderProduct = (title, price) => {
+const renderProduct = (title, price, img = 'https://placehold.it/130x120') => {
     return `<div class="product-item">
+                <img src="${img}" alt="item-photo" class="item-img">
                 <h3>${title}</h3>
-                <p>${price}</p>
+                <p id="price">${price} ₽</p>
                 <button class="buy-btn">Купить</button>
             </div>`
 };
 
 const renderPage = list => {
-    const productsList = list.map(el => renderProduct(el.title, el.price));
-    document.querySelector(`.products`).innerHTML = productsList;
+    document.querySelector(`.products`).innerHTML = list.map(el => renderProduct(el.title, el.price)).join('');
 };
 
 renderPage(products);
