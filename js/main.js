@@ -1,203 +1,69 @@
 const API = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses';
 
-// let makeGETRequest = (url) => {
-//     return new Promise((resolve, reject) => {
-//         let xhr = new XMLHttpRequest();
-//         xhr.open('GET', url, true);
-//         xhr.onreadystatechange = () => {
-//             if (xhr.readyState === 4) {
-//                 if (xhr.status !== 200) {
-//                     reject(`error ${xhr.status} ${xhr.statusText}`);
-//                 } else {
-//                     resolve(xhr.responseText);
-//                 }
-//             }
-//         };
-//         xhr.send();
-//     })
-// };
-
-class Products {
-    constructor(container=`.products`){
-        this.container = container;
-        this.data = [];
-        this.allProduct = [];
-        this._getProducts()
-            .then(() => this._render());
-    }
-    _getProducts(){
-        return fetch(`${API}/catalogData.json`)
-            .then(result => result.json())
+const app = new Vue({
+    el: '#app',
+    data: {
+        catalogUrl: '/catalogData.json',
+        products: [],
+        imgCatalog: 'https://placehold.it/130x100',
+        cart: [],
+        searchLine: '',
+        filteredProducts: [],
+        isVisibleCart: false,
+        totalPrice: 0
+    },
+    methods: {
+        getJson(url){
+            return fetch(url)
+                .then(result => result.json())
+                .catch(error => console.log(error));
+        },
+        addProduct(product) {
+            let find = this.cart.find(el => el.id_product === product.id_product);
+            if (!find) {
+                let cartPush = this.cart.push(product);
+                this.cart[cartPush - 1].quantity = 1;
+            } else {
+                find.quantity++;
+            }
+            this.total();
+        },
+        removeProduct(product) {
+            let find = this.cart.find(el => el.id_product === product.id_product);
+            if (find.quantity === 1) {
+                this.cart.splice(product, 1);
+            } else {
+                find.quantity--;
+            }
+            this.total();
+        },
+        filterGoods() {
+            let regexp = new RegExp(this.searchLine, 'i');
+            this.filteredProducts = this.products.filter(el => regexp.test(el.product_name));
+        },
+        total() {
+            this.totalPrice = 0;
+            for (i = 0; i < this.cart.length; i++) {
+                this.totalPrice += this.cart[i].price * this.cart[i].quantity;
+            }
+        },
+    },
+    computed: {
+    },
+    mounted() {
+        this.getJson(`${API + this.catalogUrl}`)
             .then(data => {
-                this.data = [...data];
-                // this._render();
-            })
-            .catch(error => console.log(error));
-    }
-    countAllProductPrice() {
-        let result = 0;
-        for (let i = 0; i < this.allProduct.length; i++) {
-            result += +this.allProduct[i].price;
-        }
-        console.log(result);
-        return result;
-    }
-    _render(){
-        const block = document.querySelector(this.container);
-        for (let el of this.data) {
-            const product = new ProductItem(el);
-            this.allProduct.push(product);
-            block.insertAdjacentHTML('beforeend', product.render())
-        }
-    }
-}
-
-class ProductItem {
-    constructor(el, img='https://placehold.it/130x120'){
-        this.product_name = el.product_name;
-        this.id_product = el.id_product;
-        this.price = el.price;
-        this.img = img;
-        this.quantity = el.quantityItem;
-    }
-    render() {
-        return `<div class="product-item">
-                 <img src="${this.img}" alt="${this.product_name}" class="item-img">
-                 <div class="desc">
-                     <h3>${this.product_name}</h3>
-                     <p>${this.price} ₽</p>
-                     <button class="buy-btn">Купить</button>
-                 </div>
-             </div>`
-    }
-    renderItem() {
-        return `<div class="cart__item">
-                    <a href="#"><img src="${this.img}" alt="cart item image"></a>
-                        <div class="info__item">
-                            <h3>${this.product_name}</h3>
-                            <span class="info__check">${this.quantity}  x   ${this.price}</span>
-                        </div>
-                    <button class="button__cart-del"></button>
-                </div>`
-    }
-}
-
-class Cart {
-    constructor(flex = `.cart__product`){
-        this.flex = flex;
-        this.data = [];
-        this.quantityItem = Number;
-        this.cartSum = Number;
-        this._getCartProducts()
-            .then(() => this.renderItemCart());
-    }
-    _getCartProducts(){
-        return fetch(`${API}/getBasket.json`)
-            .then(result => result.json())
+                for (let el of data) {
+                    this.products.push(el);
+                    this.filteredProducts.push(el);
+                }
+            });
+        this.getJson(`getProducts.json`)
             .then(data => {
-                this.data = [...data];
+                for (let el of data) {
+                    this.products.push(el);
+                    this.filteredProducts.push(el);
+                }
             })
-            .catch(error => console.log(error));
     }
-    renderItemCart() {
-        const cartItem = document.querySelector(this.flex);
-        for (let el of this.data) {
-            const produ = new ProductItem(el);
-            this.allProdu.push(produ);
-            block.insertAdjacentHTML('beforeend', produ.renderItem())
-        }
-        // ProductItem.renderItem() - Рисует разметку для каждого товара в корзине
-class Products {
-    constructor(container=`.products`){
-        this.container = container;
-        this.data = [];
-        this.allProduct = [];
-        this.init();
-    }
-    init(){
-        this._fetchProducts();
-        this._render();
-        this.countAllProductPrice();
-    }
-    _fetchProducts(){
-        this.data = [
-            {id: 1, title: 'Notebook', price: 2000},
-            {id: 2, title: 'Keyboard', price: 200},
-            {id: 3, title: 'Mouse', price: 47},
-            {id: 4, title: 'Gamepad', price: 87},
-            {id: 5, title: 'Chair', price: 187},
-        ];
-    }
-    countAllProductPrice() {
-        let result = 0;
-        for (let i = 0; i < this.allProduct.length; i++)
-            result += +this.allProduct[i].price;
-        console.log(result);
-        const cartHeader = document.querySelector('.products-sum');
-        cartHeader.innerHTML = `Сумма всех товаров: ${result} ₽`;
-    }
-    _render(){
-        const block = document.querySelector(this.container);
-        for (let el of this.data) {
-            const product = new ProductItem(el);
-            this.allProduct.push(product);
-            block.insertAdjacentHTML('beforeend', product.render())
-        }
-    }
-}
-
-class ProductItem {
-    constructor(el, img='https://placehold.it/130x120'){
-        this.title = el.title;
-        this.id = el.id;
-        this.price = el.price;
-        this.img = img;
-    }
-    render() {
-        return `<div class="product-item">
-                 <img src="${this.img}" alt="${this.title}" class="item-img">
-                 <div class="desc">
-                     <h3>${this.title}</h3>
-                     <p>${this.price} ₽</p>
-                     <button class="buy-btn">Купить</button>
-                 </div>
-             </div>`
-    }
-}
-
-class Cart {
-    constructor(){
-        // this.cart Массив с добавленными в корзину товарами
-        // this.quantityItem Количество товаров в корзине
-        // this.cartSum Стоимость корзины
-    }
-    renderCart() {
-        // Шаблон разметки выпадающей корзины
-    }
-    renderCartArea() {
-        // Рисует разметку корзины при клике на кнопку
-    }
-    renderItem() {
-        // Шаблон разметки для товара в корзине
-    }
-    renderItemCart() {
-        // Рисует разметку для каждого товара в корзине
-        // Добавляет кнопку быстрого уменьшнгия/удаления товара из корины по средствам removeItemCart()
-    }
-    removeItemCart() {
-        // Уменьшение/удаление товара из корзины
-    }
-    addItemCart() {
-        // Добавление в корзину
-    }
-    cartPrice() {
-        // this.cartSum пересчитывает стоимось корзины
-        // выводит стоимось корзины с помощью Products().countAllProductPrice()
-    }
-}
-new Products();
-new Cart();
-        // пересчитывает и выводит стоимось корзины с помощью Products().countAllProductPrice()
-    }
-}
-new Products();
+});
