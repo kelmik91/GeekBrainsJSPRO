@@ -37,6 +37,7 @@ Vue.component('cart', {
 							if (product.quantity > 1) {
 								product.quantity--;
 							} else {
+								this.$parent.delJson(`/api/cart/${find.id_product}`, contents[find]);
 								this.cart.splice(this.cart.indexOf(product), 1);
 							}
 						}
