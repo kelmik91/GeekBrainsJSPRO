@@ -8,26 +8,19 @@ Vue.component('products' ,{
 		}
 	},
 	methods: {
-		filterGoods() {
-            let regexp = new RegExp(app.$refs.fil.searchLine, 'i');
+		filterGoods(value) {
+            let regexp = new RegExp(value, 'i');
             this.filteredProducts = this.products.filter(el => regexp.test(el.product_name));
         },
 	},
 	mounted() {
-        this.$parent.getJson(`${API + this.catalogUrl}`)
+        this.$parent.getJson(`/api/products`)
             .then(data => {
                 for (let el of data) {
                     this.products.push(el);
                     this.filteredProducts.push(el);
                 }
             });
-        this.$parent.getJson(`getProducts.json`)
-            .then(data => {
-                for (let el of data) {
-                    this.products.push(el);
-                    this.filteredProducts.push(el);
-                }
-            })
     },
     template: `<div class="products">
             <div v-if="products.length === 0">Нет данных</div>

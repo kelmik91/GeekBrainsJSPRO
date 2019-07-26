@@ -10,31 +10,38 @@ Vue.component('cart', {
 	},
 	methods: {
 		addProduct(product) {
-			this.$parent.getJson(`${API}/addToBasket.json`)
-				.then(data => {
-					if (data.result) {
-						let find = this.cart.find(el => el.id_product === product.id_product);
-            			if (!find) {
-                			let cartPush = Object.assign({quantity: 1}, product);
-                			this.cart.push(cartPush);
-            			} else {
-                			find.quantity++;
-            			}
-					}
-				});
-            this.total();
+			let find = this.cart.find(el => el.id_product === product.id_product);
+			if(find){
+				this.$parent.putJson(`/api/cart/${find.id_product}`, {quantity: 1})
+					.then(data => {
+						if(data.result){
+							find.quantity++;
+						}
+					})
+			} else {
+				let prod = Object.assign({quantity: 1}, product);
+				this.$parent.postJson(`/api/cart`, prod)
+					.then(data => {
+						if(data.result){
+							this.cart.push(prod);
+						}
+					})
+			}
         },
         removeProduct(product) {
-        	this.$parent.getJson(`${API}/deleteFromBasket.json`)
-        		.then(data => {
-        			if (data.result) {
-        				if (product.quantity > 1) {
-                			product.quantity--;
-            			} else {
-                			this.cart.splice(this.cart.indexOf(product), 1);
-            			}
-        			}
-        		})
+			let find = this.cart.find(el => el.id_product === product.id_product);
+			if(find){
+				this.$parent.putJson(`/api/cart/${find.id_product}`, {quantity: -1})
+					.then(data => {
+						if(data.result){
+							if (product.quantity > 1) {
+								product.quantity--;
+							} else {
+								this.cart.splice(this.cart.indexOf(product), 1);
+							}
+						}
+					})
+			}
             this.total();
         },
         total() {
@@ -45,7 +52,7 @@ Vue.component('cart', {
         },
     },
     mounted(){
-    	this.$parent.getJson(`${API + this.cartUrl}`)
+    	this.$parent.getJson(`/api/cart`)
     	.then(data => {
     		for (let el of data.contents) {
     			this.cart.push(el);
